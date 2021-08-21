@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Products</title>
+</head>
+<body>
+<!--without the method="post" the $_POST[] will not work -->
+<form action="http://localhost/dashboard/test/mySQL_test/form_input_data.php" method="post">
+    <label for="name">product name</label><br>
+    <input type="text" id="name" name="name"><br>
+    <label for="description">product description</label><br>
+    <input type="text" id="description" name = "description"><br>
+    <label for="price">product price</label><br>
+    <input type="text" id="price" name = "price"><br>
+    <input type="submit" value="click me"/>
+</form>
+</body>
+</html>

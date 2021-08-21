@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="styleForModalScreen.css">
+</head>
+<body>
+
+<?php include('display_db_data.php');
+?>
+<button id = 'order' style="margin-left: 45%; width: 200px;">Order</button>
+
+<div class="modalScreen-fade" hidden>
+    <div class="modalScreen">
+        <a class="modalScreen-close" href="#">X</a>
+        <div id="display-timer">
+            <form>
+                <label for="qty">Quantity</label><br>
+                <input type="number" id="qty" name="fname"><br>
+            </form>
+<!--            form input submit reloads the page, so everytime the click listener works as the first time, so I
+                changed it to a simple button and it is necessary to put that button outside of <form> element-->
+            <button id = 'selected-quantity-submit'>Submit</button>
+        </div>
+    </div>
+</div>
+
+<div id = "created-table-div">
+    <table id = "created-table-js">
+    </table>
+</div>
+<br>
+<div id = "whole-in-total-price" style="border: 1px solid black; width: fit-content; margin: auto;" hidden></div>
+<br>
+<br>
+<div id="user-info-input" style=" width: 55%; margin-left: auto;" hidden>
+<form>
+    <label for="user-first-name">User first name</label><br>
+    <input type="text" id="user-first-name" name="fname"><br>
+    <label for="user-last-name">User last name</label><br>
+    <input type="text" id="user-last-name" name="fname"><br>
+    <label for="user-email">User email</label><br>
+    <input type="email" id="user-email" name="fname"><br>
+</form>
+    <button id = 'submit-user-data-input' style=" margin-left: auto;" hidden>Confirm the order</button>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    let arrayOfChoosedProducts = [];
+    let wholeInTotalPrice = 0;
+    let stringOfChoosedProductsInfo = '';
+    let arrayLinesCount = 0;
+    let arrayOfQuantityValues = [];
+
+    let quantityValue = document.getElementById("qty");
+    let selectedQuantitySubmit = document.getElementById('selected-quantity-submit');
+    selectedQuantitySubmit.addEventListener('click', function(){
+        //let quantityValue = document.getElementById("qty");
+        if (quantityValue.value ===''){
+
+        }else {
+            stringOfChoosedProductsInfo += quantityValue.value;
+            arrayOfQuantityValues.push(quantityValue.value);
+            arrayOfChoosedProducts.push(stringOfChoosedProductsInfo);
+            stringOfChoosedProductsInfo = '';
+            hideTheModalWindow();
+        }
+    });
+
+    let wholeInTotalPriceTemp = 0;
+
+    let orderButton = document.getElementById('order');
+    orderButton.addEventListener('click',function (){
+        hideTheFirstPage();
+        tableCreate();
+        addNewCells();
+        showUserDataInputDiv();
+        showSubmitBtn();
+        showWholeInTotalPriceElement();
+        tempWholeInTotalPriceThenMakeItZero();
+    });
+
+    let submitBtn = document.getElementById('submit-user-data-input');
+    submitBtn.addEventListener('click', sendJSDataToPHP)
+
+    let tbl;
+
+    let trs = document.querySelectorAll("tr");
+    for (let i = 0; i < trs.length; i++)
+        (function (e) {
+            trs[e].addEventListener("click", function pol() {
+                console.log({
+                    "Product Name": this.querySelectorAll("*")[0].innerHTML.trim(),
+                    "Product Description": this.querySelectorAll("*")[1].innerHTML.trim(),
+                    "Product Price": this.querySelectorAll("*")[2].innerHTML.trim()
+                });
+
+                let spName = this.querySelectorAll("*")[0].innerHTML.trim();
+                let spDescription = this.querySelectorAll("*")[1].innerHTML.trim();
+                let spPrice = this.querySelectorAll("*")[2].innerHTML.trim();
+
+                stringOfChoosedProductsInfo = ''+ spName+ "|" + spDescription + "|" + spPrice + "|";
+                openTheModalWindow();
+
+                this.removeEventListener('click', pol);
+            }, false);
+        })(i);
+
+
+    $('.modalScreen-close').click(function() {
+        $(this).parents('.modalScreen-fade').fadeOut();
+        return false;
+    });
+
+    function openTheModalWindow(){
+        $(".modalScreen-fade").show();
+    }
+
+    function hideTheModalWindow(){
+        $(".modalScreen-fade").hide();
+    }
+
+    function tableCreate(){
+        //body = document.body;
+        tbl  = document.getElementById('created-table-js');
+        tbl.style.width  = '100%';
+
+        let tr = tbl.insertRow();
+        for(let j = 0; j < 6; j++){
+            let td = tr.insertCell();
+            td.appendChild(document.createTextNode(fillOneOfTheBaseCells(j)));
+            td.style.border = '1px solid black';
+        }
+    }
+
+    function addNewCells(){
+        tbl.style.width  = '100%';
+        tbl.style.border = '1px solid black';
+
+        //мы допустили эту ниже строку исключительно из за того, что мы таблицу каждый раз разрушаем и строим заново.
+        arrayLinesCount=0;
+
+        arrayLinesCount = arrayOfChoosedProducts.length - arrayLinesCount;
+
+        let currentLineNumber = 1;
+
+        for(let i = 0; i < arrayLinesCount; i++){
+            let tr = tbl.insertRow();
+            for(let j = 0; j < 6; j++){
+                let td = tr.insertCell();
+                if(j===0){
+                    td.appendChild(document.createTextNode(currentLineNumber));
+                }
+                td.style.border = '1px solid black';
+            }
+
+            let stringArray = arrayOfChoosedProducts[i].split("|");
+            for(let j = 1; j<6; j++){
+                if (j<5) {
+                    tbl.rows[i + 1].cells[j].appendChild(document.createTextNode(stringArray[j - 1]));
+                }else if (j===5){
+                    let inTotalPrice = parseInt(stringArray[2]*stringArray[3],10);
+                    if (Number.isInteger(inTotalPrice)) {
+                        tbl.rows[i + 1].cells[j].appendChild(document.createTextNode(inTotalPrice.toString()))
+                        wholeInTotalPrice+=inTotalPrice;
+                    }else {
+                        alert("something went wrong, the in total price can't be displayed");
+                    }
+                }
+            }
+            ++currentLineNumber;
+        }
+    }
+
+    function fillOneOfTheBaseCells(x){
+        return{
+            "0":"o/n",
+            "1":"product name",
+            "2":"description",
+            "3":"price for one product",
+            "4":"quantity",
+            "5":"in total"
+        }[x];
+    }
+
+    function hideTheFirstPage(){
+        let phpTable = document.getElementById('products-table');
+        phpTable.hidden = true;
+        orderButton.hidden = true;
+    }
+
+    function sendJSDataToPHP(){
+        let submitUserFName = document.getElementById('user-first-name');
+        let submitUserLName = document.getElementById('user-last-name');
+        let submitUserEmail = document.getElementById('user-email');
+
+        let dataForSend = '';
+        let dataForSendArray = [];
+        for (let i=0; i<arrayOfChoosedProducts.length; i++) {
+            dataForSend = arrayOfChoosedProducts[i]+ "|" + wholeInTotalPriceTemp + "|" + submitUserFName.value + "|" + submitUserLName.value
+                + "|" + submitUserEmail.value;
+            dataForSendArray.push(dataForSend);
+        }
+        const xHttp = new XMLHttpRequest();
+        xHttp.open("GET", "add_order_data_to_db.php?q="+dataForSendArray);
+        xHttp.send();
+    }
+
+    function showUserDataInputDiv(){
+        let userDataInputDiv = document.getElementById('user-info-input');
+        userDataInputDiv.hidden = false;
+    }
+
+    function showSubmitBtn(){
+        let submitBtn = document.getElementById('submit-user-data-input');
+        submitBtn.hidden = false;
+    }
+
+    function showWholeInTotalPriceElement(){
+        let wholeInTotalPriceElement = document.getElementById('whole-in-total-price');
+        wholeInTotalPriceElement.innerText = "You're order's whole in total Price is "+ wholeInTotalPrice + "$";
+        wholeInTotalPriceElement.hidden = false;
+    }
+
+    function tempWholeInTotalPriceThenMakeItZero(){
+        wholeInTotalPriceTemp = wholeInTotalPrice;
+        wholeInTotalPrice = 0;
+    }
+
+</script>
+</body>
+</html>
+
+
+<!--https://stackoverflow.com/questions/29152022/ajax-send-data-from-clientjs-to-serverphp-->

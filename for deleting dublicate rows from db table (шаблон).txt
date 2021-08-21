@@ -1,0 +1,17 @@
+DELETE t1 FROM contacts t1
+INNER JOIN contacts t2 
+WHERE 
+    t1.id < t2.id AND 
+    t1.email = t2.email;
+
+
+
+//this will delete all the dublicate rows from your products table
+
+DELETE t1 FROM products t1
+INNER JOIN products t2 
+WHERE 
+    t1.product_id < t2.product_id AND 
+    t1.description = t2.description AND
+    t1.name = t2.name AND
+    t1.price = t2.price;
