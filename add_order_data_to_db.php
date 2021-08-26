@@ -1,5 +1,7 @@
 <?php
-$db = mysqli_connect("localhost", "Ruben455", "20power20good", "online_shop");
+require_once('DB.php');
+header("X-XSS-Protection: 1; mode=block");
+
 $dataFromClientSide = $_GET['q'];
 
 $separator = ',';
@@ -19,7 +21,6 @@ $userEmail = '';
 
 $limit = 0;
 
-
 for ($i = 0; $i < count($newStringArray1); $i++) {
     array_push($ordersCount, $newStringArray1[$i]);
 }
@@ -36,6 +37,7 @@ for ($i = 0; $i < count($ordersCount); $i++) {
             $productPrice = $newStringArray2[$j];
         } elseif ($j === 3) {
             $productQuantity = $newStringArray2[$j];
+            //echo $productQuantity;
         } elseif ($j === 4) {
             $wholeInTotalPrice = $newStringArray2[$j];
         } elseif ($j === 5) {
@@ -48,64 +50,61 @@ for ($i = 0; $i < count($ordersCount); $i++) {
     }
     echo "<br>";
 
-    echo "$productName $productDescription $productPrice $productQuantity
-        $wholeInTotalPrice $userFirstName $userLastName $userEmail";
+    /*echo "$productName $productDescription $productPrice $productQuantity
+        $wholeInTotalPrice $userFirstName $userLastName $userEmail";*/
 
     //MySQL update here
     //1) check, if the user already exists in DB
-    $sql = mysqli_query($db, "SELECT * FROM users WHERE
+    $sql = DB::getInstance()->query("SELECT * FROM users WHERE
                           first_name='$userFirstName' AND
                           last_name='$userLastName' AND
                           email='$userEmail'");
 
     echo "<br>";
-    var_dump(mysqli_num_rows($sql));
-    if (mysqli_num_rows($sql) >= 1) {
-        echo "name already exists";
+
+    //echo "num_rows = ".$sql->num_rows;
+    if ($sql->num_rows >= 1) {
+        echo "name of the user already exists";
     } else {
         //2) add new user to DB
-        $query = "INSERT INTO users (first_name, last_name, email)
-                      VALUES ('$userFirstName','$userLastName','$userEmail')";
-        mysqli_query($db, $query);
+          DB::getInstance()->query("INSERT INTO users (first_name, last_name, email)
+                      VALUES ('$userFirstName','$userLastName','$userEmail')");
     }
 
     //3) get the user's ID
-    $query = "SELECT * FROM users WHERE first_name='$userFirstName' AND
-                          last_name='$userLastName' AND email='$userEmail'";
-    $result = mysqli_query($db, $query);
+    $result = DB::getInstance()->query("SELECT * FROM users WHERE first_name='$userFirstName' AND
+                          last_name='$userLastName' AND email='$userEmail'");
     echo "<br>";
-    var_dump($result);
     $row = $result->fetch_assoc();
     $user_id = $row["user_id"];
 
     //4) add user's order to "orders" table, here we have no need in checking
     //   is order already exists or not
     if ($limit === 0) {
-        $query = "INSERT INTO orders (user_id, sum)
-                      VALUES ('$user_id','$wholeInTotalPrice')";
-        mysqli_query($db, $query);
+        DB::getInstance()->query("INSERT INTO orders (user_id, sum)
+                      VALUES ('$user_id','$wholeInTotalPrice')");
         $limit++;
+        echo "your order successfully added to database";
     }
 
     //5) get the product id
-    $query = "SELECT * FROM products WHERE name='$productName' AND
+    $result = DB::getInstance()->query("SELECT * FROM products WHERE 
+                             name='$productName' AND
                              description='$productDescription' AND
-                             price='$productPrice'";
-    $result = mysqli_query($db, $query);
+                             price='$productPrice'");
     $row = $result->fetch_assoc();
     $productId = $row["product_id"];
 
     //6) get the order id
-    $query = "SELECT * FROM orders WHERE user_id='$user_id' AND
-                           sum='$wholeInTotalPrice'";
-    $result = mysqli_query($db, $query);
+    $result = DB::getInstance()->query("SELECT * FROM orders WHERE 
+                           user_id='$user_id' AND
+                           sum='$wholeInTotalPrice'");
     $row = $result->fetch_assoc();
     $orderId = $row["order_id"];
 
     //7) add user's order to "order_products" table, here we have no
     //   need in checking is order already exists or not
-    $query = "INSERT INTO order_products (order_id, product_id, qty)
-                  VALUES ('$orderId','$productId','$productQuantity')";
+    DB::getInstance()->query("INSERT INTO order_products (order_id, product_id, qty)
+                  VALUES ('$orderId','$productId','$productQuantity')");
     echo "<br>";
-    var_dump(mysqli_query($db, $query));
 }

@@ -37,13 +37,17 @@
 <div id="user-info-input" style=" width: 55%; margin-left: auto;" hidden>
 <form>
     <label for="user-first-name">User first name</label><br>
-    <input type="text" id="user-first-name" name="fname"><br>
+    <input type="text" id="user-first-name" name="fname" maxlength="25"><br>
     <label for="user-last-name">User last name</label><br>
-    <input type="text" id="user-last-name" name="fname"><br>
+    <input type="text" id="user-last-name" name="lname" maxlength="25"><br>
     <label for="user-email">User email</label><br>
-    <input type="email" id="user-email" name="fname"><br>
+    <input type="email" id="user-email" name="email" maxlength="50"><br>
 </form>
     <button id = 'submit-user-data-input' style=" margin-left: auto;" hidden>Confirm the order</button>
+</div>
+
+<div id = "ajax-onload" style=" margin-left: 45%;">
+
 </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -57,10 +61,9 @@
     let quantityValue = document.getElementById("qty");
     let selectedQuantitySubmit = document.getElementById('selected-quantity-submit');
     selectedQuantitySubmit.addEventListener('click', function(){
-        //let quantityValue = document.getElementById("qty");
         if (quantityValue.value ===''){
 
-        }else {
+        } else {
             stringOfChoosedProductsInfo += quantityValue.value;
             arrayOfQuantityValues.push(quantityValue.value);
             arrayOfChoosedProducts.push(stringOfChoosedProductsInfo);
@@ -92,14 +95,14 @@
         (function (e) {
             trs[e].addEventListener("click", function pol() {
                 console.log({
-                    "Product Name": this.querySelectorAll("*")[0].innerHTML.trim(),
-                    "Product Description": this.querySelectorAll("*")[1].innerHTML.trim(),
-                    "Product Price": this.querySelectorAll("*")[2].innerHTML.trim()
+                    "Product Name": this.querySelectorAll("td")[0].innerHTML.trim(),
+                    "Product Description": this.querySelectorAll("td")[1].innerHTML.trim(),
+                    "Product Price": this.querySelectorAll("td")[2].innerHTML.trim()
                 });
 
-                let spName = this.querySelectorAll("*")[0].innerHTML.trim();
-                let spDescription = this.querySelectorAll("*")[1].innerHTML.trim();
-                let spPrice = this.querySelectorAll("*")[2].innerHTML.trim();
+                let spName = this.querySelectorAll("td")[0].innerHTML.trim(),
+                    spDescription = this.querySelectorAll("td")[1].innerHTML.trim(),
+                    spPrice = this.querySelectorAll("td")[2].innerHTML.trim();
 
                 stringOfChoosedProductsInfo = ''+ spName+ "|" + spDescription + "|" + spPrice + "|";
                 openTheModalWindow();
@@ -123,7 +126,6 @@
     }
 
     function tableCreate(){
-        //body = document.body;
         tbl  = document.getElementById('created-table-js');
         tbl.style.width  = '100%';
 
@@ -191,21 +193,37 @@
         orderButton.hidden = true;
     }
 
-    function sendJSDataToPHP(){
+    function sendJSDataToPHP() {
         let submitUserFName = document.getElementById('user-first-name');
         let submitUserLName = document.getElementById('user-last-name');
         let submitUserEmail = document.getElementById('user-email');
 
         let dataForSend = '';
         let dataForSendArray = [];
-        for (let i=0; i<arrayOfChoosedProducts.length; i++) {
-            dataForSend = arrayOfChoosedProducts[i]+ "|" + wholeInTotalPriceTemp + "|" + submitUserFName.value + "|" + submitUserLName.value
-                + "|" + submitUserEmail.value;
-            dataForSendArray.push(dataForSend);
+        for (let i = 0; i < arrayOfChoosedProducts.length; i++) {
+            if (submitUserFName.value.toString().includes("=") || submitUserFName.value.toString().includes("\"")
+                || submitUserFName.value.toString().includes(";") || submitUserFName.value.toString().includes("'")
+                || submitUserLName.value.toString().includes("=") || submitUserLName.value.toString().includes("\"")
+                || submitUserLName.value.toString().includes(";") || submitUserLName.value.toString().includes("'")
+                || submitUserEmail.value.toString().includes("=") || submitUserEmail.value.toString().includes("\"")
+                || submitUserEmail.value.toString().includes(";") || submitUserEmail.value.toString().includes("'")
+            ) {
+                alert("The input values are not correct");
+                console.log("The input values are not correct");
+                break;
+            } else {
+                dataForSend = arrayOfChoosedProducts[i] + "|" + wholeInTotalPriceTemp + "|" + submitUserFName.value + "|" + submitUserLName.value
+                    + "|" + submitUserEmail.value;
+                dataForSendArray.push(dataForSend);
+                //отправка запроса в php
+                const xHttp = new XMLHttpRequest();
+                xHttp.open("GET", "add_order_data_to_db.php?q=" + dataForSendArray);
+                xHttp.onload = function () {
+                    document.getElementById("ajax-onload").innerHTML = xHttp.response.toString();
+                }
+                xHttp.send();
+            }
         }
-        const xHttp = new XMLHttpRequest();
-        xHttp.open("GET", "add_order_data_to_db.php?q="+dataForSendArray);
-        xHttp.send();
     }
 
     function showUserDataInputDiv(){
