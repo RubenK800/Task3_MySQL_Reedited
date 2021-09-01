@@ -4,7 +4,7 @@ class DB
 {
     private mysqli $_mysqli;
 
-    public static DB $instance;
+    private static DB $instance;
 
     public static function getInstance(): DB
     {
@@ -14,7 +14,7 @@ class DB
         return self::$instance;
     }
 
-    public function __construct()
+    private function __construct()
     {
         $this -> _mysqli = new mysqli("localhost", "Ruben455", "20power20good", "online_shop");
         if ($this->_mysqli->connect_error){
